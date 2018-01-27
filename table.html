@@ -1,0 +1,28 @@
+<div class="ui active inverted dimmer">
+    <div class="ui text loader">Loading</div>
+</div>
+<table class="ui black table">
+    <thead>
+    <tr>
+        <th ng-repeat="x in columnName track by $index">{{x}}</th>
+        <th class="center aligned" colspan="2" ng-show="picked"><i class="options icon"></i></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ng-repeat="y in data | filter:searchBox  | startFrom:currentPage*pageSize | limitTo:pageSize">
+        <td ng-repeat="x in $parent.columnName track by $index">
+            {{y[x]}}
+        </td>
+        <td>
+            <div class="ui icon buttons">
+                <button ng-click="showModalUpdate(y)" class="ui mini yellow icon button" style="padding: 7px">
+                    <i class="edit icon"></i>
+                </button>
+                <button ng-click="showModalDelete(y)" class="ui mini red icon button" style="padding: 7px">
+                    <i class="remove icon"></i>
+                </button>
+            </div>
+        </td>
+    </tr>
+    </tbody>
+</table>

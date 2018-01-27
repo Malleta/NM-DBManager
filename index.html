@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="myApp">
+<head>
+    <meta charset="UTF-8">
+    <title>Softversko projekat</title>
+    <link>
+    <link rel="stylesheet" href="css/semantic.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/components/icon.min.css">
+
+    <script src="javascript/parts/jquery-3.2.1.min.js"></script>
+    <script src="javascript/parts/angular.min.js"></script>
+    <script src="javascript/parts/semantic.min.js"></script>
+</head>
+<body ng-controller="myCtrl" style="overflow: hidden" ng-cloak>
+
+<div class="ui grid segment" style="padding: 2rem; margin: 3rem; height: 85vh">
+    <div class="four wide column">
+        <div class="ui items">
+            <div class="item">
+                <div class="ui selection dropdown">
+                    <input type="hidden" name="gender">
+                    <i class="dropdown icon"></i>
+                    <div class="default text">Izaberite tabelu</div>
+                    <div class="menu">
+                        <div ng-click="getTable(x[Tables_in])" ng-repeat="x in allTables" class="item">
+                            <i class="table icon"></i>
+                            {{x[Tables_in]}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="item" ng-show="tableName.length>0">
+                <div class="ui active inverted dimmer _settings">
+                    <div class="ui small text loader">Učitavanje</div>
+                </div>
+                <div class="ui card">
+                    <div class="content">
+                        <div class="header">Opcije <i class="right floated setting icon"></i></div>
+                    </div>
+                    <h4 class="ui divider" style="margin: 0"></h4>
+                    <div class="content">
+                        <div class="ui divided list">
+                            <div class="item">
+                                <div class="ui grid">
+                                    <div class="six wide column"><h4>Pretraga</h4></div>
+                                    <div class="six wide column right floated">
+                                        <div ng-click="showModalSearch()"
+                                             class="ui black horizontal label right floated"
+                                             style="margin-bottom: .4rem; cursor: pointer">RegexSupport
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="ui search" style="padding-bottom: .5rem">
+                                    <div class="ui icon input fluid">
+                                        <input ng-model="searchBox" class="prompt" type="text" placeholder="Pretraga">
+                                        <i class="search icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item">
+                                <h4>Dodavanje reda</h4>
+                                <button style="margin-bottom: .5rem" ng-click="showModalInsert()"
+                                        class="ui button right labeled icon fluid green">
+                                    <i class="add icon"></i>Dodaj
+                                </button>
+                            </div>
+                            <div class="item">
+                                <h4>Dodavanje reda</h4>
+                                <button style="margin-bottom: .5rem" ng-click="showModalColumnFilter()"
+                                        class="ui button right labeled icon fluid yellow">
+                                    <i class="filter icon"></i>Filtriraj
+                                </button>
+                            </div>
+                            <div class="item center aligned">
+                                <div class="ui tiny teal inverted compact icon menu" style="margin: 1rem">
+                                    <a ng-disabled="currentPage == 0" class="item"
+                                       ng-click="loader(-1)">
+                                        <i class="left angle icon"></i>
+                                    </a>
+                                    <label class="item">{{currentPage+1}}/{{numberOfPages()}}</label>
+                                    <a class="item" ng-disabled="numberOfPages() == currentPage"
+                                       ng-click="loader(1)">
+                                        <i class="right angle icon"></i>
+                                    </a>
+                                    <a class="active item">
+                                        <div class="ui input" style="width:3.5rem;">
+                                            <input type="text" ng-model="pageSize">
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="twelve wide column">
+        <div ng-show="tableName.length>0" class="ui segment" style="height: 100%; overflow-y: scroll;">
+            <div ng-include="'table.html'"></div>
+            <div class="ui active inverted dimmer _table">
+                <div class="ui small text loader">Učitavanje</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="ui fullscreen modal insert">
+    <i class="close icon"></i>
+    <div class="header">
+        Add row in {{tableName}}
+    </div>
+    <div class="content" style="overflow:scroll">
+        <table class="ui green celled table" style="margin-right: 3rem">
+            <thead>
+            <tr>
+                <th ng-repeat="x in columnName track by $index">{{x}}</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td ng-repeat="x in columnName track by $index">
+                    <input ng-model="columnInput[x]" type="text" class="ui input">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div ng-show="errorMsg.length>0" class="ui error message">
+            <div class="header">Error</div>
+            <p>{{errorMsg}}</p>
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancel
+        </div>
+        <div ng-click="rowInsert()" class="ui positive right labeled icon button">
+            Add
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+<div class="ui fullscreen modal update">
+    <i class="close icon"></i>
+    <div class="ui icon header">
+        <i class="update icon"></i>
+        Update row in {{tableName}}
+    </div>
+    <div class="content" style="overflow:scroll">
+        <table class="ui green celled table" style="margin-right: 3rem">
+            <thead>
+            <tr>
+                <th ng-repeat="x in columnName track by $index">{{x}}</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td ng-repeat="x in columnName track by $index">
+                    <input ng-model="currentData[x]" ng-change="dataUpdate[x] = currentData[x]" type="text"
+                           class="ui input">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div ng-show="errorMsg.length>0" class="ui error message">
+            <div class="header">Error</div>
+            <p>{{errorMsg}}</p>
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancel
+        </div>
+        <div ng-click="rowUpdate()" class="ui positive right labeled icon button">
+            Update
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+<div class="ui tiny modal delete">
+    <i class="close icon"></i>
+    <div class="ui icon header">
+        <i class="delete icon"></i>
+        Brisanje podataka
+    </div>
+    <div class="content">
+        <p>Izabrana kolona će biti zauvek obrisana!</p>
+        <div ng-show="errorMsg.length>0" class="ui error message">
+            <div class="header">Error</div>
+            <p>{{errorMsg}}</p>
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui negative button">
+            Ne
+        </div>
+        <div ng-click="rowDelete()" class="ui positive right labeled icon button">
+            <i class="checkmark icon"></i>
+            Da, obriši
+        </div>
+    </div>
+</div>
+<div class="ui tiny modal _filter">
+    <i class="close icon"></i>
+    <div class="ui icon header">
+        <i class="filter icon"></i>
+        Filtriranje kolona
+    </div>
+    <div class="content">
+        <div class="ui divided list">
+            <h3>Kolone u tabeli {{tableName}}</h3>
+            <div ng-repeat="x in _columnName track by $index" class="item">
+                <div class="ui slider checkbox" style="margin: 1rem">
+                    <input ng-model="filterChecked[x]" ng-init="filterChecked[x] = true;" type="checkbox">
+                    <label style="font-size: 22px">{{x}}</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui negative button">
+            Zatvori
+        </div>
+        <div ng-click="columnFilter()" class="ui positive right labeled icon button">
+            <i class="checkmark icon"></i>
+            Filtriraj
+        </div>
+    </div>
+</div>
+<div class="ui large modal _search">
+    <i class="close icon"></i>
+    <div class="ui icon header">
+        <i class="filter icon"></i>
+        Filtriranje kolona
+    </div>
+    <div class="content">
+        <div class="ui segments">
+
+            <!--<div class="ui segment" ng-repeat="i in regNum">-->
+            <!--<div class="ui segment" ng-repeat="l in $parent._columnName">-->
+            <!--{{$parent.i}} {{l}}-->
+            <!--</div>-->
+            <!--</div>-->
+
+
+            <div class="ui segment" repeat-done ng-repeat="i in regexSearch track by $index">
+                <select class="ui target" ng-model="regexSearch[$index].columnName">
+                    <option ng-repeat="column in $parent._columnName track by $index" value="{{column}}">
+                        {{column}}
+                    </option>
+                </select>
+
+                <div class="ui input">
+                    <input type="text" ng-model="regexSearch[$index].Regex">
+                </div>
+
+                <select class="ui dropdown" ng-model="regexSearch[$index].logicOperator">
+                    <option value="">Logička operacija</option>
+                    <option value="&&">&& ( AND )</option>
+                    <option value="||">|| ( OR )</option>
+                    <option value="!=">!= ( NOT )</option>
+                </select>
+
+                <div ng-show="regexSearch[$index].logicOperator" ng-click="$parent.regNumUp()"
+                     class="ui icon positive basic button">
+                    <i class="add icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui negative button">
+            Zatvori
+        </div>
+        <div ng-click="columnSearch()" class="ui positive right labeled icon button">
+            <i class="checkmark icon"></i>
+            Filtriraj
+        </div>
+    </div>
+</div>
+
+<div class="ui mini modal success">
+    <div class="header">Podaci su uspešno {{dataStatus}}</div>
+    <div class="actions">
+        <div class="ui positive right labeled icon button">
+            U redu
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+<script src="javascript/indexJS.js"></script>
+<script>
+    $('.ui.dropdown').dropdown();
+</script>
+</body>
+</html>
